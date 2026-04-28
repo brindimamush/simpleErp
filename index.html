@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simple ERP Demo</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;background:#f4f6f8;color:#222}header{background:#1f2937;color:#fff;padding:16px 24px}main{padding:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}.card{background:#fff;border-radius:16px;padding:16px;box-shadow:0 4px 14px rgba(0,0,0,.08)}h2{margin-top:0}input,button,select{padding:8px;margin:4px 0;width:100%;box-sizing:border-box}button{background:#2563eb;color:#fff;border:none;border-radius:8px;cursor:pointer}button:hover{opacity:.95}table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.metric{font-size:28px;font-weight:bold}.muted{color:#666;font-size:12px}
+</style>
+</head>
+<body>
+<header><h1>Simple ERP Demo (Vanilla JS + In-Memory Storage)</h1></header>
+<main>
+<div class='card'>
+<h2>Dashboard</h2>
+<div>Sales <div id='sales' class='metric'>0</div></div>
+<div>Expenses <div id='expenses' class='metric'>0</div></div>
+<div>Profit <div id='profit' class='metric'>0</div></div>
+<div>Cash <div id='cash' class='metric'>0</div></div>
+</div>
+
+<div class='card'>
+<h2>Add Sale</h2>
+<input id='saleProduct' placeholder='Product'>
+<div class='grid2'>
+<input id='saleQty' type='number' placeholder='Qty'>
+<input id='salePrice' type='number' placeholder='Unit Price'>
+</div>
+<button onclick='addSale()'>Add Sale</button>
+</div>
+
+<div class='card'>
+<h2>Add Expense</h2>
+<input id='expName' placeholder='Expense Name'>
+<input id='expAmount' type='number' placeholder='Amount'>
+<button onclick='addExpense()'>Add Expense</button>
+</div>
+
+<div class='card'>
+<h2>Inventory Update</h2>
+<input id='invProduct' placeholder='Product'>
+<input id='invQty' type='number' placeholder='Add Qty'>
+<button onclick='updateInventory()'>Update Stock</button>
+</div>
+
+<div class='card'>
+<h2>Inventory</h2>
+<table><thead><tr><th>Product</th><th>Qty</th></tr></thead><tbody id='invTable'></tbody></table>
+</div>
+
+<div class='card'>
+<h2>Sales Log</h2>
+<table><thead><tr><th>Product</th><th>Qty</th><th>Total</th></tr></thead><tbody id='salesTable'></tbody></table>
+</div>
+
+<div class='card'>
+<h2>Expense Log</h2>
+<table><thead><tr><th>Name</th><th>Amount</th></tr></thead><tbody id='expTable'></tbody></table>
+</div>
+</main>
+<script>
+const db={inventory:[{product:'Sugar',qty:50},{product:'Rice',qty:30}],sales:[],expenses:[],cash:1000};
+function money(n){return Number(n).toFixed(2)}
+function findItem(p){return db.inventory.find(i=>i.product.toLowerCase()===p.toLowerCase())}
+function addSale(){const p=saleProduct.value.trim();const q=+saleQty.value;const pr=+salePrice.value;if(!p||q<=0||pr<0)return;let item=findItem(p);if(!item){alert('Product not found');return;}if(item.qty<q){alert('Insufficient stock');return;}item.qty-=q;const total=q*pr;db.sales.push({product:p,qty:q,total});db.cash+=total;render();saleProduct.value=saleQty.value=salePrice.value='';}
+function addExpense(){const n=expName.value.trim();const a=+expAmount.value;if(!n||a<=0)return;db.expenses.push({name:n,amount:a});db.cash-=a;render();expName.value=expAmount.value='';}
+function updateInventory(){const p=invProduct.value.trim();const q=+invQty.value;if(!p||q===0)return;let item=findItem(p);if(item)item.qty+=q;else db.inventory.push({product:p,qty:q});render();invProduct.value=invQty.value='';}
+function render(){const sales=db.sales.reduce((a,b)=>a+b.total,0);const expenses=db.expenses.reduce((a,b)=>a+b.amount,0);salesEl=sales;document.getElementById('sales').textContent=money(sales);document.getElementById('expenses').textContent=money(expenses);document.getElementById('profit').textContent=money(sales-expenses);document.getElementById('cash').textContent=money(db.cash);
+invTable.innerHTML=db.inventory.map(i=>`<tr><td>${i.product}</td><td>${i.qty}</td></tr>`).join('');
+salesTable.innerHTML=db.sales.map(i=>`<tr><td>${i.product}</td><td>${i.qty}</td><td>${money(i.total)}</td></tr>`).join('');
+expTable.innerHTML=db.expenses.map(i=>`<tr><td>${i.name}</td><td>${money(i.amount)}</td></tr>`).join('');}
+render();
+</script>
+</body>
+</html>
